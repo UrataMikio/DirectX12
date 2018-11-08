@@ -5,8 +5,6 @@
 
 class Window;
 
-
-
 class D3D12Manager
 {
 public:
@@ -14,6 +12,8 @@ public:
 	~D3D12Manager();
 
 private:
+	// 初期化
+	void Initialize(void);
 	// デバイス生成
 	HRESULT CreateDev(void);
 	// コマンド生成
@@ -25,6 +25,15 @@ private:
 	HRESULT CreateCmmandList(void);
 	// スワップチェイン
 	HRESULT CreateSwapChainHWnd(void);
+	// デスクリプタヒープ
+	HRESULT CreateDescriptorHeap(void);
+	// レンダーターゲットビュー
+	void CreateRenderTargetView(void);
+	// ルートシグネチャ
+	void CreateRootSignature(void);
+	// レンダーターゲットビューのクリアコマンド発行
+	// フェンス発行
+	void ClearRTV();
 
 
 	// ウィンドウ
@@ -42,5 +51,9 @@ private:
  
 	IDXGIFactory4* factory;
 	IDXGISwapChain3* swap;
+	UINT backNum;
+
+	ID3D12DescriptorHeap* rtvHeap;
+	ID3D12Resource* rtvResource[2];
 };
 

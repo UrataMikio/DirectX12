@@ -12,7 +12,7 @@ D3D_FEATURE_LEVEL levels[] = {
 };
 
 D3D12Manager::D3D12Manager(std::weak_ptr<Window>win) :
-	win(win), result(S_OK)
+	win(win), result(S_OK), backNum(0)
 {
 	device = nullptr;
 
@@ -21,8 +21,7 @@ D3D12Manager::D3D12Manager(std::weak_ptr<Window>win) :
 	queue = nullptr;
 	list = nullptr;
 
-	// デバイス呼び出し
-	CreateDev();
+	Initialize();
 }
 
 D3D12Manager::~D3D12Manager()
@@ -34,6 +33,28 @@ D3D12Manager::~D3D12Manager()
 	queue->Release();
 	// オブジェクト解放の際は、deleteではなくRelease()を使おう
 	device->Release();
+}
+
+void D3D12Manager::Initialize(void)
+{
+	// デバイス呼び出し
+	CreateDev();
+	// コマンドキュー呼び出し
+	CreateCmmandQueue();
+	// アロケーター呼び出し
+	CreateCommandAllocator();
+	// コマンドリスト呼び出し
+	CreateCmmandList();
+	// スワップチェイン呼び出し
+	CreateSwapChainHWnd();
+	// ディスクリプタヒープ呼び出し
+	CreateDescriptorHeap();
+	// レンダーターゲットビュー呼び出し
+	CreateRenderTargetView();
+	// ルートシグネチャ呼び出し
+	CreateRootSignature();
+	// レンダーターゲットビューのクリアコマンド呼び出し
+	ClearRTV();
 }
 
 HRESULT D3D12Manager::CreateDev(void)
@@ -98,5 +119,76 @@ HRESULT D3D12Manager::CreateSwapChainHWnd(void)
 
 	result = factory->CreateSwapChainForHwnd(queue, win.lock()->GetHandle(), &desc, nullptr, nullptr, (IDXGISwapChain1**)(&swap));
 
+	backNum = desc.BufferCount;
+
 	return result;
 }
+
+HRESULT D3D12Manager::CreateDescriptorHeap(void)
+{
+	D3D12_DESCRIPTOR_HEAP_DESC desc = {};
+	desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAGS::D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+	desc.NodeMask = 0;
+	desc.NumDescriptors = backNum;	// バッファの数分
+	desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+
+	result = device->CreateDescriptorHeap(&desc,IID_PPV_ARGS(&rtvHeap));
+
+	return result;
+}
+
+void D3D12Manager::CreateRenderTargetView(void)
+{
+	UINT size = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+	D3D12_RENDER_TARGET_VIEW_DESC desc = {};
+	desc.Format = DXGI_FORMAT::DXGI_FORMAT_R8G8B8A8_UNORM;
+	desc.ViewDimension = D3D12_RTV_DIMENSION::D3D12_RTV_DIMENSION_TEXTURE2DMS;
+	auto handle = rtvHeap->GetCPUDescriptorHandleForHeapStart();
+	
+	for (UINT i = 0; i < backNum; ++i) {
+		result = swap->GetBuffer(i,IID_PPV_ARGS(&rtvResource[i]));
+		device->CreateRenderTargetView(rtvResource[i],&desc,handle);
+		handle.ptr += size;
+	}
+}
+
+void D3D12Manager::CreateRootSignature(void)
+{
+	D3D12_ROOT_SIGNATURE_DESC desc = {};
+	ID3D12RootSignature* rootSignature = nullptr;
+	ID3DBlob* signature = nullptr;
+	ID3DBlob* error = nullptr;
+
+	desc.Flags = D3D12_ROOT_SIGNATURE_FLAGS::D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+	D3D12SerializeRootSignature( &desc, D3D_ROOT_SIGNATURE_VERSION::D3D_ROOT_SIGNATURE_VERSION_1 , &signature, &error);
+	result = device->CreateRootSignature(0, signature->GetBufferPointer(),signature->GetBufferSize(),IID_PPV_ARGS(&rootSignature));
+}
+
+void D3D12Manager::ClearRTV()
+{
+	const FLOAT color[] = { 0.0f,1.0f,0.0f,1.0f };
+	int bbIndex = swap->GetCurrentBackBufferIndex();
+	// フェンス
+	ID3D12Fence* _fence = nullptr;
+	UINT64 _fenceValue = 0;
+	device->CreateFence(_fenceValue, D3D12_FENCE_FLAGS::D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&_fence));
+
+	allocator->Reset();
+	list->Reset(allocator,nullptr);
+
+	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = rtvHeap->GetCPUDescriptorHandleForHeapStart();
+	rtvHandle.ptr += bbIndex * device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+	list->OMSetRenderTargets(1,&rtvHandle, false,nullptr);
+	list->ClearRenderTargetView(rtvHandle, color, 0, nullptr);
+
+	list->Close();
+	queue->ExecuteCommandLists(1,(ID3D12CommandList* const*)&list);
+	swap->Present(1, 0);
+	// フェンス
+	++_fenceValue;
+	queue->Signal(_fence, _fenceValue);
+	while (_fence->GetCompletedValue() != _fenceValue) {
+		
+	}
+}
+

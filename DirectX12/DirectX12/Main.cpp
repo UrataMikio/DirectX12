@@ -1,9 +1,11 @@
 #include "Main.h"
 #include "Window.h"
+#include "D3D12Manager.h"
 
 void ClassCreate()
 {
 	window = std::make_shared<Window>();
+	manager = std::make_shared<D3D12Manager>(window);
 }
 
 int main() {
@@ -12,6 +14,8 @@ int main() {
 
 	// msg‚ğ‰Šú‰»
 	MSG msg = {};
+
+	//D3D12_CPU_DESCRIPTOR_HANDLE descriptorHandle;
 
 	// –³ŒÀƒ‹[ƒv
 	while(msg.message != WM_QUIT) {
