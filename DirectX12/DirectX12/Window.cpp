@@ -1,6 +1,6 @@
 #include "Window.h"
 #include "tchar.h"
-
+#include "icon.h"
 
 Window::Window() : 
 	handle(nullptr)
@@ -36,6 +36,8 @@ void Window::SetWindow(void)
 	window.cbSize = sizeof(WNDCLASSEX);	// WNDCLASSEXを使う際、メモリサイズを決めるため、必ず記述する
 	window.lpfnWndProc = (WNDPROC)WindowProcedual;	// コールバック関数の指定
 	window.lpszClassName = ("DirectXTest");
+	window.hIcon = LoadIcon(nullptr,MAKEINTRESOURCE(ICON_ID));
+	window.hIconSm = LoadIcon( GetModuleHandle(0), MAKEINTRESOURCE(ICON_ID));
 	window.hInstance = GetModuleHandle(0);	// ハンドルの取得
 	RegisterClassEx(&window);	// アプリケーションクラス	※ WNDCLASSEXを使用する場合は、RegisterClassに"Ex"を付ける
 }

@@ -1,5 +1,6 @@
 #include "D3D12Manager.h"
 #include "Window.h"
+#include "DirectXMath.h"
 
 #pragma comment(lib,"d3d12.lib") 
 #pragma comment(lib,"dxgi.lib")
@@ -191,4 +192,18 @@ void D3D12Manager::ClearRTV()
 		
 	}
 }
+
+void D3D12Manager::CreatePolygon(void)
+{
+	Vertex vertices[] = {
+		{ { 0.0f,0.0f,0.0f } },
+	{ { 1.0f,0.0f,0.0f } },
+	{ { 0.0f,-1.0f,0.0f } }
+	};
+
+	D3D12_INPUT_ELEMENT_DESC desc = {};
+
+
+}
+
 

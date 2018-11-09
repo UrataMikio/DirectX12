@@ -1,9 +1,14 @@
 #pragma once
 #include <d3d12.h>
 #include <dxgi1_4.h>
+#include "DirectXMath.h"
 #include <memory>
 
 class Window;
+
+struct Vertex {
+	DirectX::XMFLOAT3 pos;
+};
 
 class D3D12Manager
 {
@@ -34,6 +39,8 @@ private:
 	// レンダーターゲットビューのクリアコマンド発行
 	// フェンス発行
 	void ClearRTV();
+	// 
+	void CreatePolygon(void);
 
 
 	// ウィンドウ
