@@ -35,7 +35,7 @@ void Window::SetWindow(void)
 {
 	window.cbSize = sizeof(WNDCLASSEX);	// WNDCLASSEXを使う際、メモリサイズを決めるため、必ず記述する
 	window.lpfnWndProc = (WNDPROC)WindowProcedual;	// コールバック関数の指定
-	window.lpszClassName = ("DirectXTest");
+	window.lpszClassName = _T("DirectXTest");
 	window.hIcon = LoadIcon(nullptr,MAKEINTRESOURCE(ICON_ID));
 	window.hIconSm = LoadIcon( GetModuleHandle(0), MAKEINTRESOURCE(ICON_ID));
 	window.hInstance = GetModuleHandle(0);	// ハンドルの取得
@@ -57,7 +57,7 @@ void Window::Create(void)
 {
 	handle = CreateWindow(
 		window.lpszClassName,	// 使用するクラス名指定
-		("DirectX12"),	// タイトルバーの名前指定
+		_T("DirectX12"),	// タイトルバーの名前指定
 		WS_OVERLAPPEDWINDOW,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,

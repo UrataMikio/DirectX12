@@ -16,6 +16,9 @@ public:
 	D3D12Manager(std::weak_ptr<Window>win);
 	~D3D12Manager();
 
+	// 毎日処理
+	void OnRender(void);
+
 private:
 	// 初期化
 	void Initialize(void);
@@ -38,9 +41,12 @@ private:
 	void CreateRootSignature(void);
 	// レンダーターゲットビューのクリアコマンド発行
 	// フェンス発行
-	void ClearRTV();
-	// 
-	void CreatePolygon(void);
+	// シェーダー読み込み
+	HRESULT ShaderCompile(void);
+	// パイプライン
+	void CreatePipeLine(void);
+	// 頂点リソース生成
+	HRESULT CreateVertex(void);
 
 
 	// ウィンドウ
@@ -59,8 +65,22 @@ private:
 	IDXGIFactory4* factory;
 	IDXGISwapChain3* swap;
 	UINT backNum;
+	ID3D12RootSignature* rootSignature;
+	ID3D12PipelineState* pipeLine;
 
 	ID3D12DescriptorHeap* rtvHeap;
 	ID3D12Resource* rtvResource[2];
+
+	ID3D12Fence* _fence;
+
+	UINT64 _fenceValue = 0;
+
+	// 頂点シェーダのじょうほう
+	ID3DBlob* vShader;
+	// ピクセルシェーダーのじょうほう
+	ID3DBlob* pShader;
+
+	// 頂点リソース
+	ID3D12Resource* vRsc;
 };
 

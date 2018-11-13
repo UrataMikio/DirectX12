@@ -24,6 +24,10 @@ int main() {
 			TranslateMessage(&msg);	
 			DispatchMessage(&msg);
 		}
+		else
+		{
+			manager->OnRender();
+		}
 	}
 	
 	return 0;
